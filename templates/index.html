@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MPHA Tigers Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="dashboard">
+
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+<img src="../static/images/missouritiger.png" alt="MPHA Tigers" class="club-badge" style="width: 10vw; min-width: 70px; max-width: 130px; height: auto; object-fit: contain;">
+                <div class="club-info">
+                    <h1 class="club-name">MPHA TIGERS</h1>
+                    <span class="subtitle">Pro Clubs Dashboard</span>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="last-updated">
+                    <span id="last-updated-text">Fetching stats...</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Stats Overview Cards -->
+        <section class="overview-cards">
+            <div class="card">
+                <div class="card-label">Total Members</div>
+                <div class="card-value" id="total-members">--</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Total Goals</div>
+                <div class="card-value" id="total-goals">--</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Total Assists</div>
+                <div class="card-value" id="total-assists">--</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Avg Rating</div>
+                <div class="card-value" id="avg-rating">--</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Total MOTM</div>
+                <div class="card-value" id="total-motm">--</div>
+            </div>
+        </section>
+
+        <!-- Leaderboard -->
+        <section class="section">
+            <div class="section-header">
+                <h2>Player Leaderboard</h2>
+                <div class="sort-controls">
+                    <label>Sort by:</label>
+                    <select id="sort-by" onchange="renderLeaderboard()">
+                        <option value="goals">Goals</option>
+                        <option value="assists">Assists</option>
+                        <option value="gamesPlayed">Games Played</option>
+                        <option value="motm">MOTM</option>
+                        <option value="avgRating">Avg Rating</option>
+                        <option value="gAndA">G+A</option>
+                    </select>
+                </div>
+            </div>
+            <div class="table-container">
+                <table class="stats-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Player</th>
+                            <th>GP</th>
+                            <th>Goals</th>
+                            <th>Assists</th>
+                            <th>G+A</th>
+                            <th>MOTM</th>
+                            <th>Avg Rating</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-body">
+                        <tr><td colspan="8" class="loading">Loading stats...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
