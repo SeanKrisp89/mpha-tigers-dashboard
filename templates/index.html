@@ -115,6 +115,22 @@
 
 </section>
 
+<!-- Match Logs -->
+<section class="section" id="match-logs-section">
+    <div class="section-header">
+        <h2>Match Logs</h2>
+        <div class="match-filter">
+            <button class="toggle-btn active" id="btn-all-matches" onclick="filterMatches('all')">All</button>
+            <button class="toggle-btn" id="btn-league-matches" onclick="filterMatches('league')">League</button>
+            <button class="toggle-btn" id="btn-playoff-matches" onclick="filterMatches('playoff')">Playoff</button>
+        </div>
+    </div>
+    <div id="match-logs-container"></div>
+    <div id="load-more-container" style="text-align: center; padding: 20px; display: none;">
+        <button class="load-more-btn" onclick="loadMoreMatches()">Load More</button>
+    </div>
+</section>
+
     </div>
 
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>

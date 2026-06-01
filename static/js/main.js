@@ -9,6 +9,10 @@ const REAL_NAMES = {
 
 let playersData = [];
 let currentView = 'leaderboard';
+let allMatches = [];
+let filteredMatches = [];
+let visibleMatchCount = 5;
+let currentMatchFilter = 'all';
 
 async function loadStats() {
     document.getElementById('last-updated-text').textContent = 'Fetching stats...';
@@ -28,6 +32,10 @@ async function loadStats() {
         renderOverviewCards();
         renderCurrentView();
         populateCompareDropdowns();
+        populateCompareDropdowns();
+        allMatches = parseMatches(data);
+        filteredMatches = allMatches;
+        renderMatchLogs();
 
         const now = new Date();
         document.getElementById('last-updated-text').textContent =
@@ -333,6 +341,133 @@ return `
             <span>${loserRealName}</span> is definitively worse than <span>${winnerRealName}</span>
         </div>
     `;
+}
+
+function parseMatches(data) {
+    const league = (data.matches?.league || []).map(m => ({ ...m, matchType: 'League' }));
+    const playoff = (data.matches?.playoff || []).map(m => ({ ...m, matchType: 'Playoff' }));
+    return [...league, ...playoff].sort((a, b) => b.timestamp - a.timestamp);
+}
+
+function filterMatches(filter) {
+    currentMatchFilter = filter;
+    visibleMatchCount = 5;
+
+    document.getElementById('btn-all-matches').classList.remove('active');
+    document.getElementById('btn-league-matches').classList.remove('active');
+    document.getElementById('btn-playoff-matches').classList.remove('active');
+    document.getElementById(`btn-${filter}-matches`).classList.add('active');
+
+    if (filter === 'all') {
+        filteredMatches = allMatches;
+    } else {
+        filteredMatches = allMatches.filter(m => m.matchType.toLowerCase() === filter);
+    }
+
+    renderMatchLogs();
+}
+
+function loadMoreMatches() {
+    visibleMatchCount += 5;
+    renderMatchLogs();
+}
+
+function toggleMatchDetails(matchId) {
+    const details = document.getElementById(`details-${matchId}`);
+    const icon = document.getElementById(`icon-${matchId}`);
+    details.classList.toggle('open');
+    icon.classList.toggle('open');
+}
+
+function renderMatchLogs() {
+    const container = document.getElementById('match-logs-container');
+    const loadMoreContainer = document.getElementById('load-more-container');
+    const visible = filteredMatches.slice(0, visibleMatchCount);
+
+    if (visible.length === 0) {
+        container.innerHTML = '<p class="loading">No matches found.</p>';
+        loadMoreContainer.style.display = 'none';
+        return;
+    }
+
+    container.innerHTML = visible.map(match => {
+        const clubData = match.clubs['110106'];
+        if (!clubData) return '';
+
+        const goalsFor = parseInt(clubData.goals) || 0;
+        const goalsAgainst = parseInt(clubData.goalsAgainst) || 0;
+        const result = clubData.result === '1' || clubData.wins === '1' ? 'win'
+            : clubData.ties === '1' ? 'tie' : 'loss';
+        const resultLabel = result === 'win' ? 'W' : result === 'tie' ? 'D' : 'L';
+
+        const opponentId = Object.keys(match.clubs).find(id => id !== '110106');
+        const opponentName = match.clubs[opponentId]?.details?.name || 'Unknown';
+
+        const date = new Date(match.timestamp * 1000);
+        const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        const timeAgo = match.timeAgo ? `${match.timeAgo.number} ${match.timeAgo.unit} ago` : dateStr;
+
+        const players = match.players?.['110106'] || {};
+        const playerRows = Object.values(players).map(p => {
+            const passAttempts = parseInt(p.passattempts) || 0;
+            const passesMade = parseInt(p.passesmade) || 0;
+            const passSuccessRate = passAttempts > 0 ? Math.round((passesMade / passAttempts) * 100) : 0;
+            const isMotm = p.mom === '1' || p.mom === 1;
+
+            return `
+                <tr>
+                    <td class="${isMotm ? 'motm-highlight' : ''}">${p.playername}${isMotm ? ' ⭐' : ''}</td>
+                    <td>${p.pos || '--'}</td>
+                    <td>${p.goals || 0}</td>
+                    <td>${p.assists || 0}</td>
+                    <td class="${parseFloat(p.rating) >= 8.0 ? 'rating-green' : parseFloat(p.rating) >= 7.0 ? 'rating-amber' : 'rating-red'}">${parseFloat(p.rating || 0).toFixed(2)}</td>
+                    <td>${p.shots || 0}</td>
+                    <td>${passAttempts}</td>
+                    <td>${passesMade}</td>
+                    <td>${passSuccessRate}%</td>
+                </tr>
+            `;
+        }).join('');
+
+        return `
+            <div class="match-row">
+                <div class="match-summary" onclick="toggleMatchDetails('${match.matchId}')">
+                    <div>
+                        <span class="match-result-badge ${result}">${resultLabel}</span>
+                        <div class="match-opponent" style="margin-top: 6px;">vs ${opponentName}</div>
+                    </div>
+                    <div class="match-score">
+                        ${goalsFor} - ${goalsAgainst}
+                        <span class="match-expand-icon" id="icon-${match.matchId}">▾</span>
+                    </div>
+                    <div class="match-meta">
+                        <div class="match-type-badge">${match.matchType}</div>
+                        <div>${timeAgo}</div>
+                    </div>
+                </div>
+                <div class="match-details" id="details-${match.matchId}">
+                    <table class="match-details-table">
+                        <thead>
+                            <tr>
+                                <th>Player</th>
+                                <th>Position</th>
+                                <th>Goals</th>
+                                <th>Assists</th>
+                                <th>Rating</th>
+                                <th>Shots</th>
+                                <th>Pass Att</th>
+                                <th>Pass Made</th>
+                                <th>Pass %</th>
+                            </tr>
+                        </thead>
+                        <tbody>${playerRows}</tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    loadMoreContainer.style.display = visibleMatchCount < filteredMatches.length ? 'block' : 'none';
 }
 
 function showError(message) {
