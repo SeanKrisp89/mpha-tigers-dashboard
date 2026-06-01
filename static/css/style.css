@@ -770,3 +770,101 @@ body {
     color: var(--accent-gold);
     font-weight: 600;
 }
+
+/* ===== MOBILE RESPONSIVE ===== */
+@media (max-width: 768px) {
+
+    .dashboard {
+        padding: 12px;
+    }
+
+    /* Header */
+    .header {
+        padding: 16px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .header-right {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .club-name {
+        font-size: 26px;
+    }
+
+    .powered-by {
+        font-size: 14px;
+    }
+
+    /* Stat cards - 2 per row instead of 5 */
+    .overview-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .card-value {
+        font-size: 32px;
+    }
+
+    /* Nav tabs */
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .section-header-controls {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+
+    .view-toggle {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .toggle-btn {
+        flex: 1;
+        text-align: center;
+        padding: 8px 6px;
+        font-size: 12px;
+    }
+
+    /* Sort controls */
+    .sort-controls {
+        width: 100%;
+    }
+
+    .sort-controls select {
+        flex: 1;
+    }
+
+    /* Player cards - 1 per row */
+    .player-cards-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Compare selectors */
+    .compare-selectors {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .compare-selectors select {
+        width: 100%;
+        min-width: unset;
+    }
+
+    /* Match logs */
+    .match-summary {
+        grid-template-columns: auto 1fr auto;
+        gap: 8px;
+        padding: 12px;
+    }
+
+    .match-score {
+        font-size: 16px;
+    }
+}
