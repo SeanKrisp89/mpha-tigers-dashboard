@@ -1,5 +1,7 @@
 from flask import Flask, render_template, jsonify
 import requests
+import pyodbc
+import os
 
 app = Flask(__name__)
 
@@ -11,11 +13,77 @@ HEADERS = {
     "Referer": "https://proclubstracker.com/"
 }
 
+DB_CONNECTION_STRING = os.environ.get("DB_CONNECTION_STRING", "")
+
+def get_db_connection():
+    if not DB_CONNECTION_STRING:
+        return None
+    try:
+        conn = pyodbc.connect(DB_CONNECTION_STRING)
+        return conn
+    except Exception as e:
+        print(f"DB connection failed: {e}")
+        return None
+
 def fetch_club_data():
     url = f"https://proclubstracker.com/api/clubs/{CLUB_ID}?platform={PLATFORM}"
     response = requests.get(url, headers=HEADERS)
     response.raise_for_status()
     return response.json()
+
+def save_snapshots(members):
+    conn = get_db_connection()
+    if not conn:
+        print("No DB connection, skipping snapshot.")
+        return
+
+    cursor = conn.cursor()
+
+    for stats in members:
+        name = stats.get("proName") or stats.get("name")
+        games_played = int(stats.get("gamesPlayed") or 0)
+        goals = int(stats.get("goals") or 0)
+        assists = int(stats.get("assists") or 0)
+        motm = int(stats.get("manOfTheMatch") or 0)
+        avg_rating = float(stats.get("ratingAve") or 0)
+        win_rate = int(stats.get("winRate") or 0)
+        pass_success = int(stats.get("passSuccessRate") or 0)
+        shot_success = int(stats.get("shotSuccessRate") or 0)
+        pro_overall = int(stats.get("proOverall") or 0)
+        position = stats.get("favoritePosition") or "unknown"
+
+        # Check last snapshot for this player
+        cursor.execute("""
+            SELECT TOP 1 games_played, goals, assists, motm, avg_rating
+            FROM player_snapshots
+            WHERE player_name = ?
+            ORDER BY snapshot_date DESC
+        """, name)
+
+        last = cursor.fetchone()
+
+        # Only save if stats have changed
+        if last is None or (
+            last.games_played != games_played or
+            last.goals != goals or
+            last.assists != assists or
+            last.motm != motm or
+            round(last.avg_rating, 2) != round(avg_rating, 2)
+        ):
+            cursor.execute("""
+                INSERT INTO player_snapshots
+                (player_name, games_played, goals, assists, motm, avg_rating,
+                 win_rate, pass_success, shot_success, pro_overall, position)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, name, games_played, goals, assists, motm, avg_rating,
+                 win_rate, pass_success, shot_success, pro_overall, position)
+            print(f"Snapshot saved for {name}")
+        else:
+            print(f"No changes for {name}, skipping.")
+
+    conn.commit()
+    cursor.close()
+    conn.close()
 
 @app.route("/")
 def index():
@@ -25,6 +93,8 @@ def index():
 def stats():
     try:
         data = fetch_club_data()
+        members = data.get("memberStats", {}).get("members", [])
+        save_snapshots(members)
         return jsonify(data)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
