@@ -867,4 +867,14 @@ body {
     .match-score {
         font-size: 16px;
     }
+
+    /* Match log expanded details */
+    .match-details {
+        padding: 12px;
+        overflow-x: auto;
+    }
+
+    .match-details-table {
+        min-width: 500px;
+    }
 }
