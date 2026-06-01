@@ -20,10 +20,11 @@
                 </div>
             </div>
             <div class="header-right">
-                <div class="last-updated">
-                    <span id="last-updated-text">Fetching stats...</span>
-                </div>
-            </div>
+    <div class="powered-by">Powered by Seaner</div>
+    <div class="last-updated">
+        <span id="last-updated-text">Fetching stats...</span>
+    </div>
+</div>
         </header>
 
         <!-- Stats Overview Cards -->
@@ -51,21 +52,27 @@
         </section>
 
         <!-- Leaderboard -->
-        <section class="section">
-            <div class="section-header">
-                <h2>Player Leaderboard</h2>
-                <div class="sort-controls">
-                    <label>Sort by:</label>
-                    <select id="sort-by" onchange="renderLeaderboard()">
-                        <option value="goals">Goals</option>
-                        <option value="assists">Assists</option>
-                        <option value="gamesPlayed">Games Played</option>
-                        <option value="motm">MOTM</option>
-                        <option value="avgRating">Avg Rating</option>
-                        <option value="gAndA">G+A</option>
-                    </select>
-                </div>
+<section class="section">
+    <div class="section-header">
+        <h2>Player Stats</h2>
+        <div class="section-header-controls">
+            <div class="view-toggle">
+                <button class="toggle-btn active" id="btn-leaderboard" onclick="switchView('leaderboard')">Leaderboard</button>
+                <button class="toggle-btn" id="btn-cards" onclick="switchView('cards')">Player Cards</button>
             </div>
+            <div class="sort-controls">
+                <label>Sort by:</label>
+                <select id="sort-by" onchange="renderCurrentView()">
+                    <option value="goals">Goals</option>
+                    <option value="assists">Assists</option>
+                    <option value="gamesPlayed">Games Played</option>
+                    <option value="motm">MOTM</option>
+                    <option value="avgRating">Avg Rating</option>
+                    <option value="gAndA">G+A</option>
+                </select>
+            </div>
+        </div>
+    </div>
             <div class="table-container">
                 <table class="stats-table">
                     <thead>
@@ -84,8 +91,14 @@
                         <tr><td colspan="8" class="loading">Loading stats...</td></tr>
                     </tbody>
                 </table>
-            </div>
-        </section>
+    </div>
+
+    <!-- Player Cards View -->
+    <div id="cards-view" style="display: none;">
+        <div class="player-cards-grid" id="player-cards-grid"></div>
+    </div>
+
+</section>
 
     </div>
 

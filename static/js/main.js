@@ -1,8 +1,10 @@
 let playersData = [];
+let currentView = 'leaderboard';
 
 async function loadStats() {
     document.getElementById('last-updated-text').textContent = 'Fetching stats...';
     document.getElementById('leaderboard-body').innerHTML = '<tr><td colspan="8" class="loading">Loading stats...</td></tr>';
+    document.getElementById('player-cards-grid').innerHTML = '';
 
     try {
         const response = await fetch('/api/stats');
@@ -15,7 +17,7 @@ async function loadStats() {
 
         playersData = parseStats(data);
         renderOverviewCards();
-        renderLeaderboard();
+        renderCurrentView();
 
         const now = new Date();
         document.getElementById('last-updated-text').textContent =
@@ -66,10 +68,45 @@ function renderOverviewCards() {
     document.getElementById('avg-rating').textContent = avgRating;
 }
 
-function renderLeaderboard() {
+function getSortedPlayers() {
     const sortBy = document.getElementById('sort-by').value;
-    const sorted = [...playersData].sort((a, b) => b[sortBy] - a[sortBy]);
+    return [...playersData].sort((a, b) => b[sortBy] - a[sortBy]);
+}
 
+function renderCurrentView() {
+    if (currentView === 'leaderboard') {
+        renderLeaderboard();
+    } else {
+        renderPlayerCards();
+    }
+}
+
+function switchView(view) {
+    currentView = view;
+
+    const leaderboardView = document.getElementById('table-container') ||
+        document.querySelector('.table-container');
+    const cardsView = document.getElementById('cards-view');
+    const btnLeaderboard = document.getElementById('btn-leaderboard');
+    const btnCards = document.getElementById('btn-cards');
+
+    if (view === 'leaderboard') {
+        leaderboardView.style.display = 'block';
+        cardsView.style.display = 'none';
+        btnLeaderboard.classList.add('active');
+        btnCards.classList.remove('active');
+        renderLeaderboard();
+    } else {
+        leaderboardView.style.display = 'none';
+        cardsView.style.display = 'block';
+        btnLeaderboard.classList.remove('active');
+        btnCards.classList.add('active');
+        renderPlayerCards();
+    }
+}
+
+function renderLeaderboard() {
+    const sorted = getSortedPlayers();
     const tbody = document.getElementById('leaderboard-body');
 
     if (sorted.length === 0) {
@@ -101,6 +138,76 @@ function renderLeaderboard() {
     }).join('');
 }
 
+function renderPlayerCards() {
+    const sorted = getSortedPlayers();
+    const grid = document.getElementById('player-cards-grid');
+
+    if (sorted.length === 0) {
+        grid.innerHTML = '<p class="loading">No player data found.</p>';
+        return;
+    }
+
+    grid.innerHTML = sorted.map(player => {
+        const ratingClass = player.avgRating >= 8.0
+            ? 'rating-green'
+            : player.avgRating >= 7.0
+            ? 'rating-amber'
+            : 'rating-red';
+
+        return `
+            <div class="player-card">
+                <div class="player-card-header">
+                    <div>
+                        <div class="player-card-name">${player.name}</div>
+                        <div class="player-card-position">${player.position}</div>
+                    </div>
+                    <div class="player-card-ovr">
+                        <div class="player-card-ovr-value">${player.proOverall}</div>
+                        <div class="player-card-ovr-label">OVR</div>
+                    </div>
+                </div>
+
+                <div class="player-card-rating ${ratingClass}">${player.avgRating.toFixed(2)}</div>
+<div style="text-align: center; font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; margin-bottom: 12px;">Avg Rating</div>
+
+                <div class="player-card-stats">
+                    <div class="player-card-stat">
+                        <div class="player-card-stat-value">${player.gamesPlayed}</div>
+                        <div class="player-card-stat-label">Games</div>
+                    </div>
+                    <div class="player-card-stat">
+                        <div class="player-card-stat-value">${player.goals}</div>
+                        <div class="player-card-stat-label">Goals</div>
+                    </div>
+                    <div class="player-card-stat">
+                        <div class="player-card-stat-value">${player.assists}</div>
+                        <div class="player-card-stat-label">Assists</div>
+                    </div>
+                    <div class="player-card-stat">
+                        <div class="player-card-stat-value">${player.motm}</div>
+                        <div class="player-card-stat-label">MOTM</div>
+                    </div>
+                </div>
+
+                <div class="player-card-percentages">
+                    <div class="player-card-pct">
+                        <div class="player-card-pct-value">${player.winRate}%</div>
+                        <div class="player-card-pct-label">Win Rate</div>
+                    </div>
+                    <div class="player-card-pct">
+                        <div class="player-card-pct-value">${player.passSuccess}%</div>
+                        <div class="player-card-pct-label">Pass %</div>
+                    </div>
+                    <div class="player-card-pct">
+                        <div class="player-card-pct-value">${player.shotSuccess}%</div>
+                        <div class="player-card-pct-label">Shot %</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
 function showError(message) {
     document.getElementById('leaderboard-body').innerHTML =
         `<tr><td colspan="8" class="error">⚠️ ${message}</td></tr>`;
@@ -111,4 +218,4 @@ function showError(message) {
 loadStats();
 
 // Auto-refresh data when sort changes
-document.getElementById('sort-by').addEventListener('change', loadStats);
+document.getElementById('sort-by').addEventListener('change', renderCurrentView);
