@@ -59,6 +59,8 @@ function parseStats(data) {
             motm: parseInt(stats.manOfTheMatch) || 0,
             avgRating: parseFloat(stats.ratingAve) || 0,
             gAndA: (parseInt(stats.goals) || 0) + (parseInt(stats.assists) || 0),
+            goalsPerGame: parseInt(stats.gamesPlayed) > 0 ? ((parseInt(stats.goals) || 0) / parseInt(stats.gamesPlayed)).toFixed(2) : '0.00',
+            assistsPerGame: parseInt(stats.gamesPlayed) > 0 ? ((parseInt(stats.assists) || 0) / parseInt(stats.gamesPlayed)).toFixed(2) : '0.00',
             winRate: parseInt(stats.winRate) || 0,
             shotSuccess: parseInt(stats.shotSuccessRate) || 0,
             passSuccess: parseInt(stats.passSuccessRate) || 0,
@@ -157,7 +159,9 @@ function renderLeaderboard() {
                 <td class="player-name">${player.name}</td>
                 <td>${player.gamesPlayed}</td>
                 <td>${player.goals}</td>
+                <td>${player.goalsPerGame}</td>
                 <td>${player.assists}</td>
+                <td>${player.assistsPerGame}</td>
                 <td>${player.gAndA}</td>
                 <td>${player.motm}</td>
                 <td class="${ratingClass}">${player.avgRating.toFixed(2)}</td>
