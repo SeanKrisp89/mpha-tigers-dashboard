@@ -1,3 +1,12 @@
+const REAL_NAMES = {
+    'L. Bubes': 'Seaner',
+    'Dark': 'Jake',
+    'XL Lap Hog': 'Jamie',
+    'Buckets': 'Dave',
+    'J. Honerface': 'Kringledick',
+    'TUG': 'Kyle'
+};
+
 let playersData = [];
 let currentView = 'leaderboard';
 
@@ -18,6 +27,7 @@ async function loadStats() {
         playersData = parseStats(data);
         renderOverviewCards();
         renderCurrentView();
+        populateCompareDropdowns();
 
         const now = new Date();
         document.getElementById('last-updated-text').textContent =
@@ -90,19 +100,29 @@ function switchView(view) {
     const btnLeaderboard = document.getElementById('btn-leaderboard');
     const btnCards = document.getElementById('btn-cards');
 
-    if (view === 'leaderboard') {
-        leaderboardView.style.display = 'block';
-        cardsView.style.display = 'none';
-        btnLeaderboard.classList.add('active');
-        btnCards.classList.remove('active');
-        renderLeaderboard();
-    } else {
-        leaderboardView.style.display = 'none';
-        cardsView.style.display = 'block';
-        btnLeaderboard.classList.remove('active');
-        btnCards.classList.add('active');
-        renderPlayerCards();
-    }
+const compareView = document.getElementById('compare-view');
+const btnCompare = document.getElementById('btn-compare');
+
+leaderboardView.style.display = 'none';
+cardsView.style.display = 'none';
+compareView.style.display = 'none';
+btnLeaderboard.classList.remove('active');
+btnCards.classList.remove('active');
+btnCompare.classList.remove('active');
+
+if (view === 'leaderboard') {
+    leaderboardView.style.display = 'block';
+    btnLeaderboard.classList.add('active');
+    renderLeaderboard();
+} else if (view === 'cards') {
+    cardsView.style.display = 'block';
+    btnCards.classList.add('active');
+    renderPlayerCards();
+} else if (view === 'compare') {
+    compareView.style.display = 'block';
+    btnCompare.classList.add('active');
+    populateCompareDropdowns();
+}
 }
 
 function renderLeaderboard() {
@@ -206,6 +226,113 @@ function renderPlayerCards() {
             </div>
         `;
     }).join('');
+}
+
+function populateCompareDropdowns() {
+    const select1 = document.getElementById('compare-player1');
+    const select2 = document.getElementById('compare-player2');
+
+    const options = playersData.map(p =>
+        `<option value="${p.name}">${p.name}</option>`
+    ).join('');
+
+    select1.innerHTML = '<option value="">Select Player 1</option>' + options;
+    select2.innerHTML = '<option value="">Select Player 2</option>' + options;
+}
+
+function renderComparison() {
+    const p1Name = document.getElementById('compare-player1').value;
+    const p2Name = document.getElementById('compare-player2').value;
+    const result = document.getElementById('compare-result');
+
+    if (!p1Name || !p2Name) {
+        result.innerHTML = '';
+        return;
+    }
+
+    if (p1Name === p2Name) {
+        result.innerHTML = '<p class="loading">Select two different players!</p>';
+        return;
+    }
+
+    const p1 = playersData.find(p => p.name === p1Name);
+    const p2 = playersData.find(p => p.name === p2Name);
+
+    const stats = [
+        { label: 'Games Played', key: 'gamesPlayed' },
+        { label: 'Goals', key: 'goals' },
+        { label: 'Assists', key: 'assists' },
+        { label: 'G+A', key: 'gAndA' },
+        { label: 'MOTM', key: 'motm' },
+        { label: 'Avg Rating', key: 'avgRating', decimal: true },
+        { label: 'Win Rate %', key: 'winRate' },
+        { label: 'Pass %', key: 'passSuccess' },
+        { label: 'Shot %', key: 'shotSuccess' },
+        { label: 'OVR', key: 'proOverall' }
+    ];
+
+    let p1Wins = 0;
+    let p2Wins = 0;
+
+    const rows = stats.map(stat => {
+        const v1 = p1[stat.key];
+        const v2 = p2[stat.key];
+        const display1 = stat.decimal ? v1.toFixed(2) : v1;
+        const display2 = stat.decimal ? v2.toFixed(2) : v2;
+
+        let class1 = '';
+        let class2 = '';
+
+let check1 = '';
+let check2 = '';
+
+if (v1 > v2) {
+    class1 = 'compare-winner';
+    class2 = 'compare-loser';
+    check1 = ' ✓';
+    p1Wins++;
+} else if (v2 > v1) {
+    class2 = 'compare-winner';
+    class1 = 'compare-loser';
+    check2 = '✓ ';
+    p2Wins++;
+}
+
+return `
+    <tr>
+        <td class="${class1}" style="position:relative;">
+            ${display1}
+            ${v1 > v2 ? '<span class="compare-check">✓</span>' : ''}
+        </td>
+        <td class="stat-label">${stat.label}</td>
+        <td class="${class2}" style="position:relative;">
+            ${v2 > v1 ? '<span class="compare-check-left">✓</span>' : ''}
+            ${display2}
+        </td>
+    </tr>
+`;
+    }).join('');
+
+    const loser = p1Wins >= p2Wins ? p2 : p1;
+    const winner = p1Wins >= p2Wins ? p1 : p2;
+    const loserRealName = REAL_NAMES[loser.name] || loser.name;
+    const winnerRealName = REAL_NAMES[winner.name] || winner.name;
+
+    result.innerHTML = `
+        <table class="compare-table">
+            <thead>
+                <tr>
+                    <th>${p1.name}</th>
+                    <th class="stat-label">Stat</th>
+                    <th>${p2.name}</th>
+                </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+        </table>
+        <div class="compare-banter">
+            <span>${loserRealName}</span> is definitively worse than <span>${winnerRealName}</span>
+        </div>
+    `;
 }
 
 function showError(message) {
