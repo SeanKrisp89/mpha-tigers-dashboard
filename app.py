@@ -1,6 +1,6 @@
 from flask import Flask, render_template, jsonify
 import requests
-import pyodbc
+import pymssql
 import os
 
 app = Flask(__name__)
@@ -19,7 +19,13 @@ def get_db_connection():
     if not DB_CONNECTION_STRING:
         return None
     try:
-        conn = pyodbc.connect(DB_CONNECTION_STRING)
+        conn = pymssql.connect(
+            server='mpha-tigers-server.database.windows.net',
+            user='mphaadmin',
+            password=os.environ.get('DB_PASSWORD', ''),
+            database='mpha-tigers-db',
+            tds_version='7.0'
+        )
         return conn
     except Exception as e:
         print(f"DB connection failed: {e}")
