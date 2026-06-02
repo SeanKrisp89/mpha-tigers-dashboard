@@ -14,16 +14,19 @@ HEADERS = {
 }
 
 def get_db_connection():
-    if not os.environ.get('DB_PASSWORD'):
+    password = os.environ.get('DB_PASSWORD')
+    print(f"DB_PASSWORD present: {bool(password)}")
+    if not password:
         return None
     try:
         conn = pymssql.connect(
             server='mpha-tigers-server.database.windows.net',
             user='mphaadmin',
-            password=os.environ.get('DB_PASSWORD', ''),
+            password=password,
             database='mpha-tigers-db',
             tds_version='7.0'
         )
+        print("DB connection successful!")
         return conn
     except Exception as e:
         print(f"DB connection failed: {e}")
