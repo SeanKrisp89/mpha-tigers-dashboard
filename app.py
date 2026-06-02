@@ -13,10 +13,8 @@ HEADERS = {
     "Referer": "https://proclubstracker.com/"
 }
 
-DB_CONNECTION_STRING = os.environ.get("DB_CONNECTION_STRING", "")
-
 def get_db_connection():
-    if not DB_CONNECTION_STRING:
+    if not os.environ.get('DB_PASSWORD'):
         return None
     try:
         conn = pymssql.connect(
