@@ -59,12 +59,16 @@ def save_snapshots(members):
         position = stats.get("favoritePosition") or "unknown"
 
         # Check last snapshot for this player
-        cursor.execute("""
-            SELECT TOP 1 games_played, goals, assists, motm, avg_rating
-            FROM player_snapshots
-            WHERE player_name = ?
-            ORDER BY snapshot_date DESC
-        """, name)
+        try:
+            cursor.execute("""
+                SELECT TOP 1 games_played, goals, assists, motm, avg_rating
+                FROM player_snapshots
+                WHERE player_name = ?
+                ORDER BY snapshot_date DESC
+            """, (name,))
+        except Exception as e:
+            print(f"Query failed for {name}: {e}")
+            continue
 
         last = cursor.fetchone()
 
