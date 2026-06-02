@@ -23,8 +23,7 @@ def get_db_connection():
             server='mpha-tigers-server.database.windows.net',
             user='mphaadmin',
             password=password,
-            database='mpha-tigers-db',
-            tds_version='7.0'
+            database='mpha-tigers-db'
         )
         print("DB connection successful!")
         return conn
