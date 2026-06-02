@@ -63,7 +63,7 @@ def save_snapshots(members):
             cursor.execute("""
                 SELECT TOP 1 games_played, goals, assists, motm, avg_rating
                 FROM player_snapshots
-                WHERE player_name = ?
+                WHERE player_name = %s
                 ORDER BY snapshot_date DESC
             """, (name,))
         except Exception as e:
@@ -74,19 +74,19 @@ def save_snapshots(members):
 
         # Only save if stats have changed
         if last is None or (
-            last.games_played != games_played or
-            last.goals != goals or
-            last.assists != assists or
-            last.motm != motm or
-            round(last.avg_rating, 2) != round(avg_rating, 2)
+            last[0] != games_played or
+            last[1] != goals or
+            last[2] != assists or
+            last[3] != motm or
+            round(last[4], 2) != round(avg_rating, 2)
         ):
             cursor.execute("""
                 INSERT INTO player_snapshots
                 (player_name, games_played, goals, assists, motm, avg_rating,
                  win_rate, pass_success, shot_success, pro_overall, position)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, name, games_played, goals, assists, motm, avg_rating,
-                 win_rate, pass_success, shot_success, pro_overall, position)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (name, games_played, goals, assists, motm, avg_rating,
+                 win_rate, pass_success, shot_success, pro_overall, position))
             print(f"Snapshot saved for {name}")
         else:
             print(f"No changes for {name}, skipping.")
