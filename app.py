@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, request
 import requests
 import pymssql
 import os
@@ -58,7 +58,6 @@ def save_snapshots(members):
         pro_overall = int(stats.get("proOverall") or 0)
         position = stats.get("favoritePosition") or "unknown"
 
-        # Check last snapshot for this player
         try:
             cursor.execute("""
                 SELECT TOP 1 games_played, goals, assists, motm, avg_rating
@@ -72,7 +71,6 @@ def save_snapshots(members):
 
         last = cursor.fetchone()
 
-        # Only save if stats have changed
         if last is None or (
             last[0] != games_played or
             last[1] != goals or
@@ -106,6 +104,75 @@ def stats():
         members = data.get("memberStats", {}).get("members", [])
         save_snapshots(members)
         return jsonify(data)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/stats/historical")
+def historical_stats():
+    from_date = request.args.get('from')
+    to_date = request.args.get('to')
+
+    if not from_date or not to_date:
+        return jsonify({"error": "Missing from or to date"}), 400
+
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({"error": "No database connection"}), 500
+
+    try:
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT DISTINCT player_name FROM player_snapshots")
+        players = [row[0] for row in cursor.fetchall()]
+
+        results = []
+
+        for player in players:
+            cursor.execute("""
+                SELECT TOP 1 games_played, goals, assists
+                FROM player_snapshots
+                WHERE player_name = %s AND CAST(snapshot_date AS DATE) <= %s
+                ORDER BY snapshot_date DESC
+            """, (player, from_date))
+            from_snap = cursor.fetchone()
+
+            cursor.execute("""
+                SELECT TOP 1 games_played, goals, assists
+                FROM player_snapshots
+                WHERE player_name = %s AND CAST(snapshot_date AS DATE) <= %s
+                ORDER BY snapshot_date DESC
+            """, (player, to_date))
+            to_snap = cursor.fetchone()
+
+            if not to_snap:
+                continue
+
+            from_games = from_snap[0] if from_snap else 0
+            from_goals = from_snap[1] if from_snap else 0
+            from_assists = from_snap[2] if from_snap else 0
+
+            games = to_snap[0] - from_games
+            goals = to_snap[1] - from_goals
+            assists = to_snap[2] - from_assists
+
+            if games <= 0 and goals <= 0 and assists <= 0:
+                continue
+
+            results.append({
+                "name": player,
+                "gamesPlayed": games,
+                "goals": goals,
+                "assists": assists,
+                "gAndA": goals + assists,
+                "goalsPerGame": round(goals / games, 2) if games > 0 else 0,
+                "assistsPerGame": round(assists / games, 2) if games > 0 else 0,
+            })
+
+        cursor.close()
+        conn.close()
+
+        return jsonify({"players": results})
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
