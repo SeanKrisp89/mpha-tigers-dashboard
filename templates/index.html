@@ -55,6 +55,13 @@
 <section class="section">
     <div class="section-header">
         <h2>Player Stats</h2>
+        <div class="date-range-filter" id="date-range-filter">
+            <input type="date" id="date-from" />
+            <span style="color: var(--text-muted);">to</span>
+            <input type="date" id="date-to" />
+            <button class="toggle-btn active" onclick="applyDateFilter()">Apply</button>
+            <button class="toggle-btn" onclick="clearDateFilter()" id="btn-clear-filter" style="display:none;">Clear</button>
+        </div>
         <div class="section-header-controls">
             <div class="view-toggle">
                 <button class="toggle-btn active" id="btn-leaderboard" onclick="switchView('leaderboard')">Leaderboard</button>
@@ -76,7 +83,7 @@
     </div>
             <div class="table-container">
                 <table class="stats-table">
-                    <thead>
+                    <thead id="leaderboard-head">
                         <tr>
                             <th>#</th>
                             <th>Player</th>
@@ -91,7 +98,7 @@
                         </tr>
                     </thead>
                     <tbody id="leaderboard-body">
-                        <tr><td colspan="8" class="loading">Loading stats...</td></tr>
+                        <tr><td colspan="10" class="loading">Loading stats...</td></tr>
                     </tbody>
                 </table>
     </div>

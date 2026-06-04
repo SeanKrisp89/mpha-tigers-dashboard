@@ -16,7 +16,7 @@ let currentMatchFilter = 'all';
 
 async function loadStats() {
     document.getElementById('last-updated-text').textContent = 'Fetching stats...';
-    document.getElementById('leaderboard-body').innerHTML = '<tr><td colspan="8" class="loading">Loading stats...</td></tr>';
+    document.getElementById('leaderboard-body').innerHTML = '<tr><td colspan="10" class="loading">Loading stats...</td></tr>';
     document.getElementById('player-cards-grid').innerHTML = '';
 
     try {
@@ -110,29 +110,29 @@ function switchView(view) {
     const btnLeaderboard = document.getElementById('btn-leaderboard');
     const btnCards = document.getElementById('btn-cards');
 
-const compareView = document.getElementById('compare-view');
-const btnCompare = document.getElementById('btn-compare');
+    const compareView = document.getElementById('compare-view');
+    const btnCompare = document.getElementById('btn-compare');
 
-leaderboardView.style.display = 'none';
-cardsView.style.display = 'none';
-compareView.style.display = 'none';
-btnLeaderboard.classList.remove('active');
-btnCards.classList.remove('active');
-btnCompare.classList.remove('active');
+    leaderboardView.style.display = 'none';
+    cardsView.style.display = 'none';
+    compareView.style.display = 'none';
+    btnLeaderboard.classList.remove('active');
+    btnCards.classList.remove('active');
+    btnCompare.classList.remove('active');
 
-if (view === 'leaderboard') {
-    leaderboardView.style.display = 'block';
-    btnLeaderboard.classList.add('active');
-    renderLeaderboard();
-} else if (view === 'cards') {
-    cardsView.style.display = 'block';
-    btnCards.classList.add('active');
-    renderPlayerCards();
-} else if (view === 'compare') {
-    compareView.style.display = 'block';
-    btnCompare.classList.add('active');
-    populateCompareDropdowns();
-}
+    if (view === 'leaderboard') {
+        leaderboardView.style.display = 'block';
+        btnLeaderboard.classList.add('active');
+        renderLeaderboard();
+    } else if (view === 'cards') {
+        cardsView.style.display = 'block';
+        btnCards.classList.add('active');
+        renderPlayerCards();
+    } else if (view === 'compare') {
+        compareView.style.display = 'block';
+        btnCompare.classList.add('active');
+        populateCompareDropdowns();
+    }
 }
 
 function renderLeaderboard() {
@@ -140,9 +140,23 @@ function renderLeaderboard() {
     const tbody = document.getElementById('leaderboard-body');
 
     if (sorted.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="loading">No player data found.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" class="loading">No player data found.</td></tr>';
         return;
     }
+
+    document.getElementById('leaderboard-head').innerHTML = `
+        <tr>
+            <th>#</th>
+            <th>Player</th>
+            <th>GP</th>
+            <th>Goals</th>
+            <th>Goals Avg.</th>
+            <th>Assists</th>
+            <th>Assists Avg.</th>
+            <th>G+A</th>
+            <th>MOTM</th>
+            <th>Avg Rating</th>
+        </tr>`;
 
     tbody.innerHTML = sorted.map((player, index) => {
         const rank = index + 1;
@@ -200,7 +214,7 @@ function renderPlayerCards() {
                 </div>
 
                 <div class="player-card-rating ${ratingClass}">${player.avgRating.toFixed(2)}</div>
-<div style="text-align: center; font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; margin-bottom: 12px;">Avg Rating</div>
+                <div style="text-align: center; font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; margin-bottom: 12px;">Avg Rating</div>
 
                 <div class="player-card-stats">
                     <div class="player-card-stat">
@@ -295,34 +309,29 @@ function renderComparison() {
         let class1 = '';
         let class2 = '';
 
-let check1 = '';
-let check2 = '';
+        if (v1 > v2) {
+            class1 = 'compare-winner';
+            class2 = 'compare-loser';
+            p1Wins++;
+        } else if (v2 > v1) {
+            class2 = 'compare-winner';
+            class1 = 'compare-loser';
+            p2Wins++;
+        }
 
-if (v1 > v2) {
-    class1 = 'compare-winner';
-    class2 = 'compare-loser';
-    check1 = ' ✓';
-    p1Wins++;
-} else if (v2 > v1) {
-    class2 = 'compare-winner';
-    class1 = 'compare-loser';
-    check2 = '✓ ';
-    p2Wins++;
-}
-
-return `
-    <tr>
-        <td class="${class1}" style="position:relative;">
-            ${display1}
-            ${v1 > v2 ? '<span class="compare-check">✓</span>' : ''}
-        </td>
-        <td class="stat-label">${stat.label}</td>
-        <td class="${class2}" style="position:relative;">
-            ${v2 > v1 ? '<span class="compare-check-left">✓</span>' : ''}
-            ${display2}
-        </td>
-    </tr>
-`;
+        return `
+            <tr>
+                <td class="${class1}" style="position:relative;">
+                    ${display1}
+                    ${v1 > v2 ? '<span class="compare-check">✓</span>' : ''}
+                </td>
+                <td class="stat-label">${stat.label}</td>
+                <td class="${class2}" style="position:relative;">
+                    ${v2 > v1 ? '<span class="compare-check-left">✓</span>' : ''}
+                    ${display2}
+                </td>
+            </tr>
+        `;
     }).join('');
 
     const loser = p1Wins >= p2Wins ? p2 : p1;
@@ -474,9 +483,79 @@ function renderMatchLogs() {
     loadMoreContainer.style.display = visibleMatchCount < filteredMatches.length ? 'block' : 'none';
 }
 
+function applyDateFilter() {
+    const from = document.getElementById('date-from').value;
+    const to = document.getElementById('date-to').value;
+
+    if (!from || !to) {
+        alert('Please select both a from and to date.');
+        return;
+    }
+
+    if (from > to) {
+        alert('From date must be before to date.');
+        return;
+    }
+
+    fetch(`/api/stats/historical?from=${from}&to=${to}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.error) {
+                alert('Error fetching historical stats: ' + data.error);
+                return;
+            }
+            document.getElementById('btn-clear-filter').style.display = 'inline-block';
+            renderHistoricalLeaderboard(data.players);
+        });
+}
+
+function clearDateFilter() {
+    document.getElementById('date-from').value = '';
+    document.getElementById('date-to').value = '';
+    document.getElementById('btn-clear-filter').style.display = 'none';
+    renderLeaderboard();
+}
+
+function renderHistoricalLeaderboard(players) {
+    const sortBy = document.getElementById('sort-by').value;
+    const validSort = ['goals', 'assists', 'gamesPlayed', 'gAndA', 'goalsPerGame', 'assistsPerGame'];
+    const key = validSort.includes(sortBy) ? sortBy : 'goals';
+
+    const sorted = [...players].sort((a, b) => (b[key] || 0) - (a[key] || 0));
+
+    document.getElementById('leaderboard-head').innerHTML = `
+        <tr>
+            <th>#</th>
+            <th>Player</th>
+            <th>GP</th>
+            <th>Goals</th>
+            <th>Goals Avg.</th>
+            <th>Assists</th>
+            <th>Assists Avg.</th>
+            <th>G+A</th>
+        </tr>`;
+
+    const tbody = document.getElementById('leaderboard-body');
+    tbody.innerHTML = sorted.map((player, index) => {
+        const rank = index + 1;
+        const rankClass = rank <= 3 ? `rank-${rank}` : 'rank-other';
+        return `
+            <tr>
+                <td><span class="rank-badge ${rankClass}">${rank}</span></td>
+                <td class="player-name">${player.name}</td>
+                <td>${player.gamesPlayed}</td>
+                <td>${player.goals}</td>
+                <td>${player.goalsPerGame}</td>
+                <td>${player.assists}</td>
+                <td>${player.assistsPerGame}</td>
+                <td>${player.gAndA}</td>
+            </tr>`;
+    }).join('');
+}
+
 function showError(message) {
     document.getElementById('leaderboard-body').innerHTML =
-        `<tr><td colspan="8" class="error">⚠️ ${message}</td></tr>`;
+        `<tr><td colspan="10" class="error">⚠️ ${message}</td></tr>`;
     document.getElementById('last-updated-text').textContent = 'Failed to fetch stats';
 }
 

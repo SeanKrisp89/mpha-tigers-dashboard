@@ -172,6 +172,8 @@ body {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
 }
 
 .section-header h2 {
@@ -314,6 +316,30 @@ body {
 .toggle-btn:hover:not(.active) {
     color: var(--text-primary);
     background: var(--bg-card);
+}
+
+/* ===== DATE RANGE FILTER ===== */
+.date-range-filter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.date-range-filter input[type="date"] {
+    background: var(--bg-card);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    padding: 7px 12px;
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    outline: none;
+}
+
+.date-range-filter input[type="date"]:focus {
+    border-color: var(--accent-orange);
 }
 
 /* ===== PLAYER CARDS ===== */
@@ -778,7 +804,6 @@ body {
         padding: 12px;
     }
 
-    /* Header */
     .header {
         padding: 16px;
         flex-direction: column;
@@ -799,7 +824,6 @@ body {
         font-size: 14px;
     }
 
-    /* Stat cards - 2 per row instead of 5 */
     .overview-cards {
         grid-template-columns: repeat(2, 1fr);
     }
@@ -808,7 +832,6 @@ body {
         font-size: 32px;
     }
 
-    /* Nav tabs */
     .section-header {
         flex-direction: column;
         align-items: flex-start;
@@ -832,7 +855,6 @@ body {
         font-size: 12px;
     }
 
-    /* Sort controls */
     .sort-controls {
         width: 100%;
     }
@@ -841,12 +863,10 @@ body {
         flex: 1;
     }
 
-    /* Player cards - 1 per row */
     .player-cards-grid {
         grid-template-columns: 1fr;
     }
 
-    /* Compare selectors */
     .compare-selectors {
         flex-direction: column;
         gap: 12px;
@@ -857,7 +877,6 @@ body {
         min-width: unset;
     }
 
-    /* Match logs */
     .match-summary {
         grid-template-columns: auto 1fr auto;
         gap: 8px;
@@ -868,7 +887,6 @@ body {
         font-size: 16px;
     }
 
-    /* Match log expanded details */
     .match-details {
         padding: 12px;
         overflow-x: auto;
@@ -876,5 +894,13 @@ body {
 
     .match-details-table {
         min-width: 500px;
+    }
+
+    .date-range-filter {
+        width: 100%;
+    }
+
+    .date-range-filter input[type="date"] {
+        flex: 1;
     }
 }
