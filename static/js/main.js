@@ -13,6 +13,29 @@ let allMatches = [];
 let filteredMatches = [];
 let visibleMatchCount = 5;
 let currentMatchFilter = 'all';
+let sortKey = 'goals';
+let sortDir = 'desc';
+let historicalData = null;
+
+const LIVE_COLUMNS = [
+    { key: 'goals',        label: 'Goals' },
+    { key: 'assists',      label: 'Assists' },
+    { key: 'gamesPlayed',  label: 'GP' },
+    { key: 'motm',         label: 'MOTM' },
+    { key: 'avgRating',    label: 'Avg Rating' },
+    { key: 'gAndA',        label: 'G+A' },
+    { key: 'goalsPerGame', label: 'Goals Avg.' },
+    { key: 'assistsPerGame', label: 'Assists Avg.' },
+];
+
+const HISTORICAL_COLUMNS = [
+    { key: 'goals',          label: 'Goals' },
+    { key: 'assists',        label: 'Assists' },
+    { key: 'gamesPlayed',    label: 'GP' },
+    { key: 'gAndA',          label: 'G+A' },
+    { key: 'goalsPerGame',   label: 'Goals Avg.' },
+    { key: 'assistsPerGame', label: 'Assists Avg.' },
+];
 
 async function loadStats() {
     document.getElementById('last-updated-text').textContent = 'Fetching stats...';
@@ -30,8 +53,7 @@ async function loadStats() {
 
         playersData = parseStats(data);
         renderOverviewCards();
-        renderCurrentView();
-        populateCompareDropdowns();
+        renderLeaderboard();
         populateCompareDropdowns();
         allMatches = parseMatches(data);
         filteredMatches = allMatches;
@@ -51,16 +73,19 @@ function parseStats(data) {
     const players = [];
 
     for (const stats of members) {
+        const gp = parseInt(stats.gamesPlayed) || 0;
+        const goals = parseInt(stats.goals) || 0;
+        const assists = parseInt(stats.assists) || 0;
         players.push({
             name: stats.proName || stats.name,
-            gamesPlayed: parseInt(stats.gamesPlayed) || 0,
-            goals: parseInt(stats.goals) || 0,
-            assists: parseInt(stats.assists) || 0,
+            gamesPlayed: gp,
+            goals: goals,
+            assists: assists,
             motm: parseInt(stats.manOfTheMatch) || 0,
             avgRating: parseFloat(stats.ratingAve) || 0,
-            gAndA: (parseInt(stats.goals) || 0) + (parseInt(stats.assists) || 0),
-            goalsPerGame: parseInt(stats.gamesPlayed) > 0 ? ((parseInt(stats.goals) || 0) / parseInt(stats.gamesPlayed)).toFixed(2) : '0.00',
-            assistsPerGame: parseInt(stats.gamesPlayed) > 0 ? ((parseInt(stats.assists) || 0) / parseInt(stats.gamesPlayed)).toFixed(2) : '0.00',
+            gAndA: goals + assists,
+            goalsPerGame: gp > 0 ? parseFloat((goals / gp).toFixed(2)) : 0,
+            assistsPerGame: gp > 0 ? parseFloat((assists / gp).toFixed(2)) : 0,
             winRate: parseInt(stats.winRate) || 0,
             shotSuccess: parseInt(stats.shotSuccessRate) || 0,
             passSuccess: parseInt(stats.passSuccessRate) || 0,
@@ -88,15 +113,52 @@ function renderOverviewCards() {
     document.getElementById('avg-rating').textContent = avgRating;
 }
 
-function getSortedPlayers() {
-    const sortBy = document.getElementById('sort-by').value;
-    return [...playersData].sort((a, b) => b[sortBy] - a[sortBy]);
+function getSortedPlayers(players) {
+    return [...players].sort((a, b) => {
+        const valA = a[sortKey] ?? 0;
+        const valB = b[sortKey] ?? 0;
+        return sortDir === 'desc' ? valB - valA : valA - valB;
+    });
+}
+
+function handleHeaderClick(key) {
+    if (sortKey === key) {
+        sortDir = sortDir === 'desc' ? 'asc' : 'desc';
+    } else {
+        sortKey = key;
+        sortDir = 'desc';
+    }
+    if (historicalData) {
+        renderHistoricalLeaderboard(historicalData);
+    } else {
+        renderLeaderboard();
+    }
+}
+
+function buildthead(columns) {
+    const arrow = col => {
+        if (sortKey !== col.key) return '<span class="sort-arrow inactive">↕</span>';
+        return sortDir === 'desc'
+            ? '<span class="sort-arrow">↓</span>'
+            : '<span class="sort-arrow">↑</span>';
+    };
+
+    const ths = columns.map(col =>
+        `<th class="sortable" onclick="handleHeaderClick('${col.key}')">${col.label} ${arrow(col)}</th>`
+    ).join('');
+
+    document.getElementById('leaderboard-head').innerHTML =
+        `<tr><th>#</th><th>Player</th>${ths}</tr>`;
 }
 
 function renderCurrentView() {
     if (currentView === 'leaderboard') {
-        renderLeaderboard();
-    } else {
+        if (historicalData) {
+            renderHistoricalLeaderboard(historicalData);
+        } else {
+            renderLeaderboard();
+        }
+    } else if (currentView === 'cards') {
         renderPlayerCards();
     }
 }
@@ -104,13 +166,13 @@ function renderCurrentView() {
 function switchView(view) {
     currentView = view;
 
-    const leaderboardView = document.getElementById('table-container') ||
-        document.querySelector('.table-container');
+    const leaderboardView = document.querySelector('.table-container');
     const cardsView = document.getElementById('cards-view');
+    const compareView = document.getElementById('compare-view');
+    const dateFilter = document.getElementById('date-range-filter');
+
     const btnLeaderboard = document.getElementById('btn-leaderboard');
     const btnCards = document.getElementById('btn-cards');
-
-    const compareView = document.getElementById('compare-view');
     const btnCompare = document.getElementById('btn-compare');
 
     leaderboardView.style.display = 'none';
@@ -123,20 +185,26 @@ function switchView(view) {
     if (view === 'leaderboard') {
         leaderboardView.style.display = 'block';
         btnLeaderboard.classList.add('active');
+        dateFilter.style.display = 'flex';
         renderLeaderboard();
     } else if (view === 'cards') {
         cardsView.style.display = 'block';
         btnCards.classList.add('active');
+        dateFilter.style.display = 'none';
         renderPlayerCards();
     } else if (view === 'compare') {
         compareView.style.display = 'block';
         btnCompare.classList.add('active');
+        dateFilter.style.display = 'none';
         populateCompareDropdowns();
     }
 }
 
 function renderLeaderboard() {
-    const sorted = getSortedPlayers();
+    historicalData = null;
+    const sorted = getSortedPlayers(playersData);
+    buildthead(LIVE_COLUMNS);
+
     const tbody = document.getElementById('leaderboard-body');
 
     if (sorted.length === 0) {
@@ -144,48 +212,31 @@ function renderLeaderboard() {
         return;
     }
 
-    document.getElementById('leaderboard-head').innerHTML = `
-        <tr>
-            <th>#</th>
-            <th>Player</th>
-            <th>GP</th>
-            <th>Goals</th>
-            <th>Goals Avg.</th>
-            <th>Assists</th>
-            <th>Assists Avg.</th>
-            <th>G+A</th>
-            <th>MOTM</th>
-            <th>Avg Rating</th>
-        </tr>`;
-
     tbody.innerHTML = sorted.map((player, index) => {
         const rank = index + 1;
         const rankClass = rank <= 3 ? `rank-${rank}` : 'rank-other';
-        const ratingClass = player.avgRating >= 8.0
-            ? 'rating-green'
-            : player.avgRating >= 7.0
-            ? 'rating-amber'
-            : 'rating-red';
+        const ratingClass = player.avgRating >= 8.0 ? 'rating-green'
+            : player.avgRating >= 7.0 ? 'rating-amber' : 'rating-red';
 
         return `
             <tr>
                 <td><span class="rank-badge ${rankClass}">${rank}</span></td>
                 <td class="player-name">${player.name}</td>
-                <td>${player.gamesPlayed}</td>
                 <td>${player.goals}</td>
-                <td>${player.goalsPerGame}</td>
                 <td>${player.assists}</td>
-                <td>${player.assistsPerGame}</td>
-                <td>${player.gAndA}</td>
+                <td>${player.gamesPlayed}</td>
                 <td>${player.motm}</td>
                 <td class="${ratingClass}">${player.avgRating.toFixed(2)}</td>
+                <td>${player.gAndA}</td>
+                <td>${player.goalsPerGame}</td>
+                <td>${player.assistsPerGame}</td>
             </tr>
         `;
     }).join('');
 }
 
 function renderPlayerCards() {
-    const sorted = getSortedPlayers();
+    const sorted = getSortedPlayers(playersData);
     const grid = document.getElementById('player-cards-grid');
 
     if (sorted.length === 0) {
@@ -194,11 +245,8 @@ function renderPlayerCards() {
     }
 
     grid.innerHTML = sorted.map(player => {
-        const ratingClass = player.avgRating >= 8.0
-            ? 'rating-green'
-            : player.avgRating >= 7.0
-            ? 'rating-amber'
-            : 'rating-red';
+        const ratingClass = player.avgRating >= 8.0 ? 'rating-green'
+            : player.avgRating >= 7.0 ? 'rating-amber' : 'rating-red';
 
         return `
             <div class="player-card">
@@ -212,10 +260,8 @@ function renderPlayerCards() {
                         <div class="player-card-ovr-label">OVR</div>
                     </div>
                 </div>
-
                 <div class="player-card-rating ${ratingClass}">${player.avgRating.toFixed(2)}</div>
                 <div style="text-align: center; font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; margin-bottom: 12px;">Avg Rating</div>
-
                 <div class="player-card-stats">
                     <div class="player-card-stat">
                         <div class="player-card-stat-value">${player.gamesPlayed}</div>
@@ -234,7 +280,6 @@ function renderPlayerCards() {
                         <div class="player-card-stat-label">MOTM</div>
                     </div>
                 </div>
-
                 <div class="player-card-percentages">
                     <div class="player-card-pct">
                         <div class="player-card-pct-value">${player.winRate}%</div>
@@ -271,11 +316,7 @@ function renderComparison() {
     const p2Name = document.getElementById('compare-player2').value;
     const result = document.getElementById('compare-result');
 
-    if (!p1Name || !p2Name) {
-        result.innerHTML = '';
-        return;
-    }
-
+    if (!p1Name || !p2Name) { result.innerHTML = ''; return; }
     if (p1Name === p2Name) {
         result.innerHTML = '<p class="loading">Select two different players!</p>';
         return;
@@ -297,8 +338,7 @@ function renderComparison() {
         { label: 'OVR', key: 'proOverall' }
     ];
 
-    let p1Wins = 0;
-    let p2Wins = 0;
+    let p1Wins = 0, p2Wins = 0;
 
     const rows = stats.map(stat => {
         const v1 = p1[stat.key];
@@ -306,18 +346,9 @@ function renderComparison() {
         const display1 = stat.decimal ? v1.toFixed(2) : v1;
         const display2 = stat.decimal ? v2.toFixed(2) : v2;
 
-        let class1 = '';
-        let class2 = '';
-
-        if (v1 > v2) {
-            class1 = 'compare-winner';
-            class2 = 'compare-loser';
-            p1Wins++;
-        } else if (v2 > v1) {
-            class2 = 'compare-winner';
-            class1 = 'compare-loser';
-            p2Wins++;
-        }
+        let class1 = '', class2 = '';
+        if (v1 > v2) { class1 = 'compare-winner'; class2 = 'compare-loser'; p1Wins++; }
+        else if (v2 > v1) { class2 = 'compare-winner'; class1 = 'compare-loser'; p2Wins++; }
 
         return `
             <tr>
@@ -330,8 +361,7 @@ function renderComparison() {
                     ${v2 > v1 ? '<span class="compare-check-left">✓</span>' : ''}
                     ${display2}
                 </td>
-            </tr>
-        `;
+            </tr>`;
     }).join('');
 
     const loser = p1Wins >= p2Wins ? p2 : p1;
@@ -352,8 +382,7 @@ function renderComparison() {
         </table>
         <div class="compare-banter">
             <span>${loserRealName}</span> is definitively worse than <span>${winnerRealName}</span>
-        </div>
-    `;
+        </div>`;
 }
 
 function parseMatches(data) {
@@ -371,11 +400,8 @@ function filterMatches(filter) {
     document.getElementById('btn-playoff-matches').classList.remove('active');
     document.getElementById(`btn-${filter}-matches`).classList.add('active');
 
-    if (filter === 'all') {
-        filteredMatches = allMatches;
-    } else {
-        filteredMatches = allMatches.filter(m => m.matchType.toLowerCase() === filter);
-    }
+    filteredMatches = filter === 'all' ? allMatches
+        : allMatches.filter(m => m.matchType.toLowerCase() === filter);
 
     renderMatchLogs();
 }
@@ -386,10 +412,8 @@ function loadMoreMatches() {
 }
 
 function toggleMatchDetails(matchId) {
-    const details = document.getElementById(`details-${matchId}`);
-    const icon = document.getElementById(`icon-${matchId}`);
-    details.classList.toggle('open');
-    icon.classList.toggle('open');
+    document.getElementById(`details-${matchId}`).classList.toggle('open');
+    document.getElementById(`icon-${matchId}`).classList.toggle('open');
 }
 
 function renderMatchLogs() {
@@ -438,8 +462,7 @@ function renderMatchLogs() {
                     <td>${passAttempts}</td>
                     <td>${passesMade}</td>
                     <td>${passSuccessRate}%</td>
-                </tr>
-            `;
+                </tr>`;
         }).join('');
 
         return `
@@ -462,22 +485,14 @@ function renderMatchLogs() {
                     <table class="match-details-table">
                         <thead>
                             <tr>
-                                <th>Player</th>
-                                <th>Position</th>
-                                <th>Goals</th>
-                                <th>Assists</th>
-                                <th>Rating</th>
-                                <th>Shots</th>
-                                <th>Pass Att</th>
-                                <th>Pass Made</th>
-                                <th>Pass %</th>
+                                <th>Player</th><th>Position</th><th>Goals</th><th>Assists</th>
+                                <th>Rating</th><th>Shots</th><th>Pass Att</th><th>Pass Made</th><th>Pass %</th>
                             </tr>
                         </thead>
                         <tbody>${playerRows}</tbody>
                     </table>
                 </div>
-            </div>
-        `;
+            </div>`;
     }).join('');
 
     loadMoreContainer.style.display = visibleMatchCount < filteredMatches.length ? 'block' : 'none';
@@ -487,23 +502,13 @@ function applyDateFilter() {
     const from = document.getElementById('date-from').value;
     const to = document.getElementById('date-to').value;
 
-    if (!from || !to) {
-        alert('Please select both a from and to date.');
-        return;
-    }
-
-    if (from > to) {
-        alert('From date must be before to date.');
-        return;
-    }
+    if (!from || !to) { alert('Please select both a from and to date.'); return; }
+    if (from > to) { alert('From date must be before to date.'); return; }
 
     fetch(`/api/stats/historical?from=${from}&to=${to}`)
         .then(res => res.json())
         .then(data => {
-            if (data.error) {
-                alert('Error fetching historical stats: ' + data.error);
-                return;
-            }
+            if (data.error) { alert('Error fetching historical stats: ' + data.error); return; }
             document.getElementById('btn-clear-filter').style.display = 'inline-block';
             renderHistoricalLeaderboard(data.players);
         });
@@ -517,23 +522,9 @@ function clearDateFilter() {
 }
 
 function renderHistoricalLeaderboard(players) {
-    const sortBy = document.getElementById('sort-by').value;
-    const validSort = ['goals', 'assists', 'gamesPlayed', 'gAndA', 'goalsPerGame', 'assistsPerGame'];
-    const key = validSort.includes(sortBy) ? sortBy : 'goals';
-
-    const sorted = [...players].sort((a, b) => (b[key] || 0) - (a[key] || 0));
-
-    document.getElementById('leaderboard-head').innerHTML = `
-        <tr>
-            <th>#</th>
-            <th>Player</th>
-            <th>GP</th>
-            <th>Goals</th>
-            <th>Goals Avg.</th>
-            <th>Assists</th>
-            <th>Assists Avg.</th>
-            <th>G+A</th>
-        </tr>`;
+    historicalData = players;
+    const sorted = getSortedPlayers(players);
+    buildthead(HISTORICAL_COLUMNS);
 
     const tbody = document.getElementById('leaderboard-body');
     tbody.innerHTML = sorted.map((player, index) => {
@@ -543,12 +534,12 @@ function renderHistoricalLeaderboard(players) {
             <tr>
                 <td><span class="rank-badge ${rankClass}">${rank}</span></td>
                 <td class="player-name">${player.name}</td>
-                <td>${player.gamesPlayed}</td>
                 <td>${player.goals}</td>
-                <td>${player.goalsPerGame}</td>
                 <td>${player.assists}</td>
-                <td>${player.assistsPerGame}</td>
+                <td>${player.gamesPlayed}</td>
                 <td>${player.gAndA}</td>
+                <td>${player.goalsPerGame}</td>
+                <td>${player.assistsPerGame}</td>
             </tr>`;
     }).join('');
 }
@@ -559,8 +550,4 @@ function showError(message) {
     document.getElementById('last-updated-text').textContent = 'Failed to fetch stats';
 }
 
-// Load stats on page load
 loadStats();
-
-// Auto-refresh data when sort changes
-document.getElementById('sort-by').addEventListener('change', renderCurrentView);

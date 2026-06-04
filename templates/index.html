@@ -13,18 +13,18 @@
         <!-- Header -->
         <header class="header">
             <div class="header-left">
-<img src="../static/images/missouritiger.png" alt="MPHA Tigers" class="club-badge" style="width: 10vw; min-width: 70px; max-width: 130px; height: auto; object-fit: contain;">
+                <img src="../static/images/missouritiger.png" alt="MPHA Tigers" class="club-badge" style="width: 10vw; min-width: 70px; max-width: 130px; height: auto; object-fit: contain;">
                 <div class="club-info">
                     <h1 class="club-name">MPHA TIGERS</h1>
                     <span class="subtitle">Pro Clubs Dashboard</span>
                 </div>
             </div>
-                <div class="header-right">
-    <div class="powered-by">Powered by Seaner</div>
-    <div class="last-updated">
-        <span id="last-updated-text">Fetching stats...</span>
-    </div>
-</div>
+            <div class="header-right">
+                <div class="powered-by">Powered by Seaner</div>
+                <div class="last-updated">
+                    <span id="last-updated-text">Fetching stats...</span>
+                </div>
+            </div>
         </header>
 
         <!-- Stats Overview Cards -->
@@ -52,93 +52,69 @@
         </section>
 
         <!-- Leaderboard -->
-<section class="section">
-    <div class="section-header">
-        <h2>Player Stats</h2>
-        <div class="date-range-filter" id="date-range-filter">
-            <input type="date" id="date-from" />
-            <span style="color: var(--text-muted);">to</span>
-            <input type="date" id="date-to" />
-            <button class="toggle-btn active" onclick="applyDateFilter()">Apply</button>
-            <button class="toggle-btn" onclick="clearDateFilter()" id="btn-clear-filter" style="display:none;">Clear</button>
-        </div>
-        <div class="section-header-controls">
-            <div class="view-toggle">
-                <button class="toggle-btn active" id="btn-leaderboard" onclick="switchView('leaderboard')">Leaderboard</button>
-                <button class="toggle-btn" id="btn-cards" onclick="switchView('cards')">Player Cards</button>
-                <button class="toggle-btn" id="btn-compare" onclick="switchView('compare')">Compare</button>
+        <section class="section">
+            <div class="section-header">
+                <h2>Player Stats</h2>
+                <div class="date-range-filter" id="date-range-filter">
+                    <input type="date" id="date-from" />
+                    <span style="color: var(--text-muted);">to</span>
+                    <input type="date" id="date-to" />
+                    <button class="toggle-btn active" onclick="applyDateFilter()">Apply</button>
+                    <button class="toggle-btn" onclick="clearDateFilter()" id="btn-clear-filter" style="display:none;">Clear</button>
+                </div>
+                <div class="section-header-controls">
+                    <div class="view-toggle">
+                        <button class="toggle-btn active" id="btn-leaderboard" onclick="switchView('leaderboard')">Leaderboard</button>
+                        <button class="toggle-btn" id="btn-cards" onclick="switchView('cards')">Player Cards</button>
+                        <button class="toggle-btn" id="btn-compare" onclick="switchView('compare')">Compare</button>
+                    </div>
+                </div>
             </div>
-            <div class="sort-controls">
-                <label>Sort by:</label>
-                <select id="sort-by" onchange="renderCurrentView()">
-                    <option value="goals">Goals</option>
-                    <option value="assists">Assists</option>
-                    <option value="gamesPlayed">Games Played</option>
-                    <option value="motm">MOTM</option>
-                    <option value="avgRating">Avg Rating</option>
-                    <option value="gAndA">G+A</option>
-                </select>
-            </div>
-        </div>
-    </div>
+
             <div class="table-container">
                 <table class="stats-table">
-                    <thead id="leaderboard-head">
-                        <tr>
-                            <th>#</th>
-                            <th>Player</th>
-                            <th>GP</th>
-                            <th>Goals</th>
-                            <th>Goals Avg.</th>
-                            <th>Assists</th>
-                            <th>Assists Avg.</th>
-                            <th>G+A</th>
-                            <th>MOTM</th>
-                            <th>Avg Rating</th>
-                        </tr>
-                    </thead>
+                    <thead id="leaderboard-head"></thead>
                     <tbody id="leaderboard-body">
                         <tr><td colspan="10" class="loading">Loading stats...</td></tr>
                     </tbody>
                 </table>
-    </div>
+            </div>
 
-    <!-- Player Cards View -->
-    <div id="cards-view" style="display: none;">
-        <div class="player-cards-grid" id="player-cards-grid"></div>
-    </div>
+            <!-- Player Cards View -->
+            <div id="cards-view" style="display: none;">
+                <div class="player-cards-grid" id="player-cards-grid"></div>
+            </div>
 
-    <!-- Compare View -->
-<div id="compare-view" style="display: none;">
-    <div class="compare-selectors">
-        <select id="compare-player1" onchange="renderComparison()">
-            <option value="">Select Player 1</option>
-        </select>
-        <div class="compare-vs">VS</div>
-        <select id="compare-player2" onchange="renderComparison()">
-            <option value="">Select Player 2</option>
-        </select>
-    </div>
-    <div id="compare-result"></div>
-</div>
+            <!-- Compare View -->
+            <div id="compare-view" style="display: none;">
+                <div class="compare-selectors">
+                    <select id="compare-player1" onchange="renderComparison()">
+                        <option value="">Select Player 1</option>
+                    </select>
+                    <div class="compare-vs">VS</div>
+                    <select id="compare-player2" onchange="renderComparison()">
+                        <option value="">Select Player 2</option>
+                    </select>
+                </div>
+                <div id="compare-result"></div>
+            </div>
+        </section>
 
-</section>
-
-<!-- Match Logs -->
-<section class="section" id="match-logs-section">
-    <div class="section-header">
-        <h2>Match Logs</h2>
-        <div class="match-filter">
-            <button class="toggle-btn active" id="btn-all-matches" onclick="filterMatches('all')">All</button>
-            <button class="toggle-btn" id="btn-league-matches" onclick="filterMatches('league')">League</button>
-            <button class="toggle-btn" id="btn-playoff-matches" onclick="filterMatches('playoff')">Playoff</button>
-        </div>
-    </div>
-    <div id="match-logs-container"></div>
-    <div id="load-more-container" style="text-align: center; padding: 20px; display: none;">
-        <button class="load-more-btn" onclick="loadMoreMatches()">Load More</button>
-    </div>
-</section>
+        <!-- Match Logs -->
+        <section class="section" id="match-logs-section">
+            <div class="section-header">
+                <h2>Match Logs</h2>
+                <div class="match-filter">
+                    <button class="toggle-btn active" id="btn-all-matches" onclick="filterMatches('all')">All</button>
+                    <button class="toggle-btn" id="btn-league-matches" onclick="filterMatches('league')">League</button>
+                    <button class="toggle-btn" id="btn-playoff-matches" onclick="filterMatches('playoff')">Playoff</button>
+                </div>
+            </div>
+            <div id="match-logs-container"></div>
+            <div id="load-more-container" style="text-align: center; padding: 20px; display: none;">
+                <button class="load-more-btn" onclick="loadMoreMatches()">Load More</button>
+            </div>
+        </section>
 
     </div>
 

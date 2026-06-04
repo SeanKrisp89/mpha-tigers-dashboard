@@ -797,6 +797,27 @@ body {
     font-weight: 600;
 }
 
+/* ===== SORTABLE HEADERS ===== */
+.sortable {
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+}
+
+.sortable:hover {
+    color: var(--accent-orange);
+}
+
+.sort-arrow {
+    font-size: 11px;
+    margin-left: 4px;
+    color: var(--accent-orange);
+}
+
+.sort-arrow.inactive {
+    color: var(--text-muted);
+}
+
 /* ===== MOBILE RESPONSIVE ===== */
 @media (max-width: 768px) {
 
