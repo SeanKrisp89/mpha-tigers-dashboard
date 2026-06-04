@@ -18,23 +18,23 @@ let sortDir = 'desc';
 let historicalData = null;
 
 const LIVE_COLUMNS = [
-    { key: 'goals',        label: 'Goals' },
-    { key: 'assists',      label: 'Assists' },
-    { key: 'gamesPlayed',  label: 'GP' },
-    { key: 'motm',         label: 'MOTM' },
-    { key: 'avgRating',    label: 'Avg Rating' },
-    { key: 'gAndA',        label: 'G+A' },
-    { key: 'goalsPerGame', label: 'Goals Avg.' },
+    { key: 'goals',          label: 'Goals' },
+    { key: 'goalsPerGame',   label: 'Goals Avg.' },
+    { key: 'assists',        label: 'Assists' },
     { key: 'assistsPerGame', label: 'Assists Avg.' },
+    { key: 'gamesPlayed',    label: 'GP' },
+    { key: 'motm',           label: 'MOTM' },
+    { key: 'avgRating',      label: 'Avg Rating' },
+    { key: 'gAndA',          label: 'G+A' },
 ];
 
 const HISTORICAL_COLUMNS = [
     { key: 'goals',          label: 'Goals' },
+    { key: 'goalsPerGame',   label: 'Goals Avg.' },
     { key: 'assists',        label: 'Assists' },
+    { key: 'assistsPerGame', label: 'Assists Avg.' },
     { key: 'gamesPlayed',    label: 'GP' },
     { key: 'gAndA',          label: 'G+A' },
-    { key: 'goalsPerGame',   label: 'Goals Avg.' },
-    { key: 'assistsPerGame', label: 'Assists Avg.' },
 ];
 
 async function loadStats() {
@@ -223,13 +223,13 @@ function renderLeaderboard() {
                 <td><span class="rank-badge ${rankClass}">${rank}</span></td>
                 <td class="player-name">${player.name}</td>
                 <td>${player.goals}</td>
+                <td>${player.goalsPerGame}</td>
                 <td>${player.assists}</td>
+                <td>${player.assistsPerGame}</td>
                 <td>${player.gamesPlayed}</td>
                 <td>${player.motm}</td>
                 <td class="${ratingClass}">${player.avgRating.toFixed(2)}</td>
                 <td>${player.gAndA}</td>
-                <td>${player.goalsPerGame}</td>
-                <td>${player.assistsPerGame}</td>
             </tr>
         `;
     }).join('');
@@ -535,11 +535,11 @@ function renderHistoricalLeaderboard(players) {
                 <td><span class="rank-badge ${rankClass}">${rank}</span></td>
                 <td class="player-name">${player.name}</td>
                 <td>${player.goals}</td>
+                <td>${player.goalsPerGame}</td>
                 <td>${player.assists}</td>
+                <td>${player.assistsPerGame}</td>
                 <td>${player.gamesPlayed}</td>
                 <td>${player.gAndA}</td>
-                <td>${player.goalsPerGame}</td>
-                <td>${player.assistsPerGame}</td>
             </tr>`;
     }).join('');
 }
