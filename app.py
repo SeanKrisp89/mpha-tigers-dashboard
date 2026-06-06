@@ -131,7 +131,7 @@ def historical_stats():
             cursor.execute("""
                 SELECT TOP 1 games_played, goals, assists
                 FROM player_snapshots
-                WHERE player_name = %s AND CAST(snapshot_date AS DATE) <= %s
+                WHERE player_name = %s AND CAST(snapshot_date AS DATE) < %s
                 ORDER BY snapshot_date DESC
             """, (player, from_date))
             from_snap = cursor.fetchone()
